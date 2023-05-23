@@ -3,34 +3,43 @@ import throttle from 'lodash.throttle';
 const feedbackParent = document.querySelector('.feedback-form');
 const feedbackEmail = document.querySelector('input');
 const feedbackMessage = document.querySelector('textarea');
-const KEY_USER_EMAIL = 'email';
-const KEY_USER_MESSAGE = 'message';
+const KEY_FORM_STATE = 'feedback-form-state';
 
-const updateOutput = () => {
-  feedbackEmail.value = localStorage.getItem(KEY_USER_EMAIL) || '';
-  feedbackMessage.value = localStorage.getItem(KEY_USER_MESSAGE) || '';
+const updateFormState = () => {
+  const formState = {
+    email: feedbackEmail.value,
+    message: feedbackMessage.value,
+  };
+  localStorage.setItem(KEY_FORM_STATE, JSON.stringify(formState));
 };
 
-window.addEventListener('load', updateOutput);
-
-const saveFormValues = () => {
-  localStorage.setItem(KEY_USER_EMAIL, feedbackEmail.value);
-  localStorage.setItem(KEY_USER_MESSAGE, feedbackMessage.value);
+const loadFormState = () => {
+  const savedFormState = localStorage.getItem(KEY_FORM_STATE);
+  if (savedFormState) {
+    const { email, message } = JSON.parse(savedFormState);
+    feedbackEmail.value = email;
+    feedbackMessage.value = message;
+  }
 };
 
-feedbackParent.addEventListener('input', throttle(saveFormValues, 500));
+const clearForm = () => {
+  localStorage.removeItem(KEY_FORM_STATE);
+  feedbackEmail.value = '';
+  feedbackMessage.value = '';
+};
 
-feedbackParent.addEventListener('submit', evt => {
-  evt.preventDefault();
-  const emailValue = feedbackEmail.value;
-  const messageValue = feedbackMessage.value;
-
-  localStorage.clear();
-  feedbackEmail.value = feedbackMessage.value = '';
-
+const logFormData = () => {
   const formData = {
-    email: emailValue,
-    message: messageValue,
+    email: feedbackEmail.value,
+    message: feedbackMessage.value,
   };
   console.log(formData);
+};
+
+feedbackParent.addEventListener('input', throttle(updateFormState, 500));
+window.addEventListener('load', loadFormState);
+feedbackParent.addEventListener('submit', evt => {
+  evt.preventDefault();
+  logFormData();
+  clearForm();
 });
